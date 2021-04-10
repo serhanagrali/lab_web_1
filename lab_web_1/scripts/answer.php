@@ -34,10 +34,18 @@ if (!isset($_SESSION["tableRows"])) {
     $_SESSION["tableRows"] = array();
 }
 
+function str_is_float($str){
+  return preg_match('/^-?(?:\d+|\d*\.\d+)$/', $str);
+}
+
 date_default_timezone_set("Europe/Moscow");
 if(isset($_GET['x'])
     && isset($_GET['y'])
-    && isset($_GET['r'])){
+    && isset($_GET['r'])
+    && str_is_float($_GET['x'])
+    && str_is_float($_GET['y'])
+    && str_is_float($_GET['r'])){
+
 
     $x = (float)$_GET["x"];
     $y = (float)$_GET["y"];
@@ -46,19 +54,13 @@ if(isset($_GET['x'])
         $coordsStatus = checkCoordinates($x, $y, $r);
         $currentTime = date("H : i : s");
         $benchmarkTime = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-        array_unshift($_SESSION["tableRows"], "<tr>
-        <td>$x</td>
-        <td>$y</td>
-        <td>$r</td>
-        <td>$coordsStatus</td>
-        <td>$currentTime</td>
-        <td>$benchmarkTime</td>
-        </tr>");
+        array_unshift($_SESSION["tableRows"], array('x' => $x, 'y' => $y, 'r' => $r,
+         'coordsStatus' => $coordsStatus, 'currentTime' => $currentTime,
+         'benchmarkTime' => $benchmarkTime));
     }
 }
 
-echo "<table id='outputTable' border='1'>
-        <tr>
+$html = "<table id='outputTable' border='1'><tr>
             <th>x</th>
             <th>y</th>
             <th>r</th>
@@ -66,5 +68,14 @@ echo "<table id='outputTable' border='1'>
             <th>Текущее время</th>
             <th>Время работы скрипта</th>
         </tr>";
-        foreach ($_SESSION["tableRows"] as $tableRow) echo $tableRow;
-        echo "</table>";
+
+// data rows
+foreach($_SESSION["tableRows"] as $row){
+    $html .= '<tr>';
+    foreach($row as $key=>$value){
+        $html .= "<td>" . $value . "</td>";
+    }
+    $html .= '</tr>';
+}
+$html .= '</table>';
+echo $html;
